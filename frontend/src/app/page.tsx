@@ -1,79 +1,118 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 
 export default function CampanaLMSHome() {
-  const [activeTool, setActiveTool] = useState<string | null>(null);
-  const [inputMessage, setInputMessage] = useState("");
-  const [messages, setMessages] = useState<{ role: "user" | "assistant"; text: string }[]>([
-    {
-      role: "assistant",
-      text: "Welcome to Campana. What can I help with today?",
-    },
-  ]);
-  const [previewContent, setPreviewContent] = useState<{ title: string; type: string } | null>(null);
+  const [view, setView] = useState<"welcome" | "list" | "pinout">("welcome");
+  const [selectedPinout, setSelectedPinout] = useState<any>(null);
+  const [q, setQ] = useState("");
 
-  function runTool(tool: string) {
-    setActiveTool(tool);
-    if (tool === "View a pinout") {
-      setMessages((m) => [
-        ...m,
-        {
-          role: "assistant",
-          text: "Which category? audio, lighting, video, network, or power?",
-        },
-      ]);
-    } else if (tool === "Research a topic") {
-      setMessages((m) => [
-        ...m,
-        { role: "assistant", text: "What topic should I research?" },
-      ]);
-    } else if (tool === "Evaluate a spec sheet") {
-      setMessages((m) => [
-        ...m,
-        {
-          role: "assistant",
-          text: "Upload or paste a link to the spec sheet. I will extract key points.",
-        },
-      ]);
+  // All available pinouts
+  const pinouts = [
+    {
+      id: "xlr-3pin",
+      name: "3-Pin XLR (Standard Audio)",
+      category: "Audio",
+      imageUrl: "/diagrams/xlr-3pin.png",
+      data: {
+        name: "3-Pin XLR",
+        description: "Industry standard for balanced audio signals",
+        pins: [
+          { num: 1, signal: "Signal Ground", color: "Shield" },
+          { num: 2, signal: "Hot/Positive (+)", color: "Red/White" },
+          { num: 3, signal: "Cold/Negative (-)", color: "Black/Blue" }
+        ],
+        applications: ["Microphones", "Professional audio equipment", "Speakers"],
+        notes: "For passive speakers (which require an external amplifier), you must use a heavy-gauge speaker cable, not an XLR microphone cable. XLR is designed for low-voltage, high-impedance signals, while speaker cables handle high-current, low-impedance speaker-level signals."
+      }
+    },
+    {
+      id: "xlr-4pin-sony",
+      name: "4-Pin XLR (Sony DC Power)",
+      category: "Power",
+      imageUrl: "/diagrams/xlr-4pin-sony-dc.png",
+      data: {
+        name: "Sony 4-Pin XLR DC Power",
+        description: "DC power connector for Sony cameras",
+        pins: [
+          { num: 1, signal: "Negative (-)", color: "Black" },
+          { num: 2, signal: "No Connection", color: "None" },
+          { num: 3, signal: "No Connection", color: "None" },
+          { num: 4, signal: "Positive (+)", color: "Red" }
+        ],
+        applications: ["Sony cameras", "Broadcast video equipment"],
+        notes: "⚠️ WARNING: Verify pinout before connecting. Equipment damage possible."
+      }
+    },
+    {
+      id: "xlr-4pin-intercom",
+      name: "4-Pin XLR (Intercom/Broadcast)",
+      category: "Audio",
+      imageUrl: "/diagrams/xlr-4pin-intercom.png",
+      data: {
+        name: "4-Pin XLR Intercom",
+        description: "Stereo audio for intercom headsets",
+        pins: [
+          { num: 1, signal: "Left (+) Signal", color: "Red" },
+          { num: 2, signal: "Left (-) Ground", color: "Green" },
+          { num: 3, signal: "Right (+) Signal", color: "Red" },
+          { num: 4, signal: "Right (-) Ground", color: "Green" }
+        ],
+        applications: ["Intercom headsets", "Broadcast equipment"],
+        notes: null
+      }
+    },
+    {
+      id: "xlr-6pin-clearcom",
+      name: "6-Pin XLR (Clearcom)",
+      category: "Audio",
+      imageUrl: "/diagrams/xlr-6pin-clearcom.png",
+      data: {
+        name: "6-Pin XLR / Clearcom®",
+        description: "Dual-cable intercom system",
+        pins: [
+          { num: 1, signal: "Cable 1: Black (-)", color: "Black" },
+          { num: 2, signal: "Cable 1: Red (+)", color: "Red" },
+          { num: 3, signal: "Cable 1: Ground", color: "Green" },
+          { num: 4, signal: "Cable 2: Black (-)", color: "Black" },
+          { num: 5, signal: "Cable 2: Red (+)", color: "Red" },
+          { num: 6, signal: "Cable 2: Ground", color: "Green" }
+        ],
+        applications: ["Professional intercom", "Theater communication", "Broadcast"],
+        notes: null
+      }
+    }
+  ];
+
+  // Client search
+  const filtered = useMemo(() => {
+    const s = q.trim().toLowerCase();
+    if (!s) return pinouts;
+    return pinouts.filter(p =>
+      [p.name, p.category, p.data.description].join(" ").toLowerCase().includes(s)
+    );
+  }, [q, pinouts]);
+
+  function showList() {
+    setView("list");
+  }
+  function showPinout(pinout: any) {
+    setSelectedPinout(pinout);
+    setView("pinout");
+  }
+  function goBack() {
+    if (view === "pinout") {
+      setView("list");
     } else {
-      setMessages((m) => [
-        ...m,
-        { role: "assistant", text: "Tell me what you're trying to do." },
-      ]);
+      setView("welcome");
     }
   }
 
-  function send(text: string) {
-    if (!text.trim()) return;
-    setMessages((m) => [...m, { role: "user", text }]);
-    setInputMessage("");
-    
-    // Simulate assistant response
-    setTimeout(() => {
-      setMessages((m) => [
-        ...m,
-        { 
-          role: "assistant", 
-          text: `I received your message: "${text}". How can I help you further?`
-        },
-      ]);
-      
-      // Simulate artifact generation
-      if (text.toLowerCase().includes("xlr") || text.toLowerCase().includes("pinout")) {
-        setPreviewContent({
-          title: "XLR 3-Pin Pinout",
-          type: "pinout"
-        });
-      }
-    }, 500);
-  }
-
   const tools = [
-    { name: "View a pinout", icon: PinIcon },
-    { name: "Research a topic", icon: ResearchIcon },
-    { name: "Evaluate a spec sheet", icon: SpecIcon },
-    { name: "Something else", icon: ZapIcon },
+    { name: "View a pinout", icon: PinIcon, onClick: showList },
+    { name: "Research a topic", icon: ResearchIcon, onClick: () => alert("Coming soon!") },
+    { name: "Evaluate a spec sheet", icon: SpecIcon, onClick: () => alert("Coming soon!") },
+    { name: "Something else", icon: ZapIcon, onClick: () => alert("Coming soon!") },
   ];
 
   return (
@@ -84,24 +123,14 @@ export default function CampanaLMSHome() {
           <div className="flex items-center gap-3">
             <Logo />
             <div>
-              <h1 className="text-lg font-semibold tracking-tight">
-                Campana LMS
-              </h1>
-              <p className="text-xs text-slate-500">
-                Agentic learning for B2B buyers
-              </p>
+              <h1 className="text-lg font-semibold tracking-tight">Campana LMS</h1>
+              <p className="text-xs text-slate-500">Agentic learning for B2B buyers</p>
             </div>
           </div>
           <div className="hidden items-center gap-2 md:flex">
-            <button className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50">
-              Docs
-            </button>
-            <button className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50">
-              Admin
-            </button>
-            <button className="rounded-lg bg-slate-900 px-3 py-2 text-sm text-white hover:bg-slate-800">
-              Sign in
-            </button>
+            <button className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50">Docs</button>
+            <button className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50">Admin</button>
+            <button className="rounded-lg bg-slate-900 px-3 py-2 text-sm text-white hover:bg-slate-800">Sign in</button>
           </div>
         </div>
       </header>
@@ -110,7 +139,7 @@ export default function CampanaLMSHome() {
       <main className="mx-auto max-w-7xl px-4 py-6">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           
-          {/* Quick Tools Sidebar - Option 3 */}
+          {/* Quick Tools Sidebar */}
           <aside className="lg:col-span-3">
             <div className="space-y-4">
               {/* Welcome Card */}
@@ -119,8 +148,8 @@ export default function CampanaLMSHome() {
                   <CircleC className="h-5 w-5" />
                   <h2 className="text-sm font-semibold">Welcome!</h2>
                 </div>
-                <p className="mb-3 text-xs text-gray-600">
-                  Jump straight to what you need without any questions.
+                <p className="text-xs text-gray-600">
+                  Click "View a pinout" to see all available connector pinouts!
                 </p>
               </div>
 
@@ -134,36 +163,33 @@ export default function CampanaLMSHome() {
                   {tools.map((t) => (
                     <button
                       key={t.name}
-                      onClick={() => runTool(t.name)}
-                      className={`group flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-left transition-all hover:border-green-600 hover:shadow-md ${
-                        activeTool === t.name
-                          ? "border-green-600 bg-green-50"
-                          : "border-gray-200 bg-white hover:bg-gray-50"
-                      }`}
+                      onClick={t.onClick}
+                      className="group flex w-full items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 text-left transition-all hover:border-green-600 hover:bg-gray-50 hover:shadow-md"
                     >
                       <t.icon className="h-5 w-5 text-gray-600 group-hover:text-green-700" />
-                      <span className="flex-1 font-medium text-gray-900">
-                        {t.name}
-                      </span>
+                      <span className="flex-1 font-medium text-gray-900">{t.name}</span>
                       <ArrowIcon className="h-4 w-4 text-gray-400 group-hover:text-green-700" />
                     </button>
                   ))}
                 </div>
-              </div>
 
               {/* Recent */}
+              </div>
               <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
                 <h3 className="mb-3 text-sm font-semibold">Recent</h3>
                 <ul className="space-y-2 text-sm">
-                  <li className="flex items-center justify-between rounded-lg border border-gray-200 p-2 hover:bg-gray-50">
-                    <span className="truncate text-gray-900">3‑pin XLR microphone</span>
+                  <li
+                    className="flex items-center justify-between rounded-lg border border-gray-200 p-2 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => showPinout(pinouts.find(p => p.id === "xlr-3pin"))}
+                  >
+                    <span className="truncate text-gray-900">3-pin XLR microphone</span>
                     <span className="text-xs text-gray-500">5 min</span>
                   </li>
-                  <li className="flex items-center justify-between rounded-lg border border-gray-200 p-2 hover:bg-gray-50">
+                  <li className="flex items-center justify-between rounded-lg border border-gray-200 p-2 hover:bg-gray-50 cursor-pointer">
                     <span className="truncate text-gray-900">RJ45 DMX crossover</span>
                     <span className="text-xs text-gray-500">1 hr</span>
                   </li>
-                  <li className="flex items-center justify-between rounded-lg border border-gray-200 p-2 hover:bg-gray-50">
+                  <li className="flex items-center justify-between rounded-lg border border-gray-200 p-2 hover:bg-gray-50 cursor-pointer">
                     <span className="truncate text-gray-900">SMPTE fiber camera</span>
                     <span className="text-xs text-gray-500">Yesterday</span>
                   </li>
@@ -172,170 +198,174 @@ export default function CampanaLMSHome() {
             </div>
           </aside>
 
-          {/* Chat + Workspace */}
+          {/* Main Area */}
           <section className="lg:col-span-9">
-            <div className="grid gap-6 lg:grid-cols-3">
-              
-              {/* Assistant - Option 4: ChatGPT Style */}
-              <div className="rounded-lg border border-gray-200 bg-white shadow-sm lg:col-span-2">
-                <div className="border-b border-gray-200 px-4 py-3">
-                  <h2 className="text-sm font-semibold text-gray-900">Assistant</h2>
+            
+            {/* Welcome View */}
+            {view === "welcome" && (
+              <div className="rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
+                <div className="mx-auto max-w-md">
+                  <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+                    <SparkIcon className="h-8 w-8 text-green-700" />
+                  </div>
+                  <h2 className="mb-3 text-2xl font-bold text-gray-900">Welcome to Campana</h2>
+                  <p className="mb-6 text-gray-600">
+                    Get instant access to connector pinouts, technical documentation, and expert guidance.
+                  </p>
+                  <button
+                    onClick={showList}
+                    className="rounded-lg bg-green-700 px-6 py-3 font-medium text-white hover:bg-green-800"
+                  >
+                    View All Pinouts →
+                  </button>
                 </div>
-                
-                {/* Messages */}
-                <div className="h-[500px] overflow-y-auto p-4">
-                  {messages.map((msg, i) => (
-                    <div
-                      key={i}
-                      className={`mb-4 flex items-start gap-4 rounded-lg p-3 transition-colors hover:bg-gray-50 ${
-                        msg.role === "user" ? "flex-row-reverse" : ""
-                      }`}
-                    >
-                      <div className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-sm text-xs font-bold text-white ${
-                        msg.role === "user" ? "bg-gray-700" : "bg-green-700"
-                      }`}>
-                        {msg.role === "user" ? "U" : "CA"}
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm leading-relaxed text-gray-900">
-                          {msg.text}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              </div>
+            )}
 
-                {/* Input */}
-                <div className="border-t border-gray-200 p-4">
-                  <div className="flex items-end gap-2">
-                    <textarea
-                      value={inputMessage}
-                      onChange={(e) => setInputMessage(e.target.value)}
+            {/* List View */}
+            {view === "list" && (
+              <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+                <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900">Available Pinouts</h2>
+                    <p className="text-sm text-gray-600">Click any connector to view details</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input
+                      value={q}
+                      onChange={(e) => setQ(e.target.value)}
+                      placeholder="Search pinouts (e.g., XLR 3-pin, Clear-Com)"
+                      className="w-64 rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-600"
+                      aria-label="Search pinouts"
                       onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          send(inputMessage);
-                        }
+                        if (e.key === "Enter" && filtered.length) showPinout(filtered[0]);
                       }}
-                      placeholder="Message Campana..."
-                      rows={1}
-                      className="flex-1 resize-none rounded-xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-600"
                     />
-                    <button
-                      onClick={() => send(inputMessage)}
-                      className="rounded-lg bg-green-700 p-3 text-white transition-colors hover:bg-green-800"
-                    >
-                      <svg
-                        className="h-5 w-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 10l7-7m0 0l7 7m-7-7v18"
-                        />
-                      </svg>
+                    <button onClick={goBack} className="text-sm text-gray-600 hover:text-gray-900">
+                      ← Back
                     </button>
                   </div>
                 </div>
+                <div className="divide-y divide-gray-200">
+                  {filtered.length === 0 ? (
+                    <div className="px-6 py-8 text-sm text-gray-600">
+                      No matches. Try “XLR 3-pin”, “4-pin Sony”, or “Clearcom”.
+                    </div>
+                  ) : (
+                    filtered.map((pinout) => (
+                      <button
+                        key={pinout.id}
+                        onClick={() => showPinout(pinout)}
+                        className="w-full px-6 py-4 text-left hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-medium text-gray-900">{pinout.name}</h3>
+                            <p className="text-sm text-gray-600">{pinout.data.description}</p>
+                            <span className="mt-2 inline-block rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+                              {pinout.category}
+                            </span>
+                          </div>
+                          <ArrowIcon className="h-5 w-5 text-gray-400" />
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
               </div>
+            )}
 
-              {/* Workspace - Option 4: Preview Panel */}
-              <div className="rounded-lg border border-gray-200 bg-white shadow-sm lg:col-span-1">
-                <div className="border-b border-gray-200 px-4 py-3">
-                  <h2 className="text-sm font-semibold text-gray-900">Workspace</h2>
+            {/* Pinout View */}
+            {view === "pinout" && selectedPinout && (
+              <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+                {/* Header */}
+                <div className="border-b border-gray-200 bg-gray-900 px-6 py-4 text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold">{selectedPinout.data.name}</h2>
+                      <p className="text-sm text-gray-300">{selectedPinout.data.description}</p>
+                    </div>
+                    <button onClick={goBack} className="text-sm text-gray-300 hover:text-white">
+                      ← Back to List
+                    </button>
+                  </div>
                 </div>
 
-                {previewContent ? (
-                  <div className="overflow-hidden">
-                    {/* Preview Header */}
-                    <div className="flex items-center justify-between bg-gray-900 p-3 text-white">
-                      <span className="text-sm font-medium">
-                        {previewContent.title}
-                      </span>
-                      <button
-                        onClick={() => setPreviewContent(null)}
-                        className="text-gray-400 hover:text-white"
-                      >
-                        <svg
-                          className="h-4 w-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-
-                    {/* Preview Content */}
-                    <div className="flex h-80 items-center justify-center bg-gray-50 p-4">
-                      <div className="text-center text-gray-500">
-                        <svg
-                          className="mx-auto mb-2 h-12 w-12"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                          />
-                        </svg>
-                        <div className="text-sm font-medium">Pinout Preview</div>
-                        <div className="mt-2 text-xs text-gray-400">
-                          Full pinout details coming soon
-                        </div>
+                <div className="p-6 space-y-6">
+                  {/* Pinout Diagram Image */}
+                  {selectedPinout.imageUrl && (
+                    <div>
+                      <h3 className="mb-3 text-sm font-semibold uppercase text-gray-700">Diagram</h3>
+                      <div className="rounded-lg border border-gray-200 overflow-hidden bg-white">
+                        <img 
+                          src={selectedPinout.imageUrl} 
+                          alt={selectedPinout.data.name}
+                          className="w-full h-auto"
+                        />
                       </div>
                     </div>
+                  )}
 
-                    {/* Actions */}
-                    <div className="flex gap-2 border-t border-gray-200 p-3">
-                      <button className="flex-1 rounded bg-green-700 px-3 py-2 text-sm text-white hover:bg-green-800">
-                        Download
-                      </button>
-                      <button className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50">
-                        Share
-                      </button>
+                  {/* Pin Table */}
+                  <div>
+                    <h3 className="mb-3 text-sm font-semibold uppercase text-gray-700">Pinout</h3>
+                    <div className="rounded-lg border border-gray-200 overflow-hidden">
+                      <table className="w-full">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Pin</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Signal</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Color</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {selectedPinout.data.pins.map((pin: any) => (
+                            <tr key={pin.num} className="hover:bg-gray-50">
+                              <td className="px-4 py-3">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-700 text-sm font-bold text-white">
+                                  {pin.num}
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 font-medium text-gray-900">{pin.signal}</td>
+                              <td className="px-4 py-3 text-gray-600">{pin.color}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
-                ) : (
-                  <div className="p-4">
-                    <div className="rounded-lg border-2 border-dashed border-gray-300 p-8 text-center">
-                      <svg
-                        className="mx-auto mb-3 h-10 w-10 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                        />
-                      </svg>
-                      <p className="text-sm text-gray-500">
-                        No artifacts yet
-                      </p>
-                      <p className="mt-1 text-xs text-gray-400">
-                        Generated content will appear here
-                      </p>
+
+                  {/* Applications */}
+                  {selectedPinout.data.applications && (
+                    <div>
+                      <h3 className="mb-3 text-sm font-semibold uppercase text-gray-700">Common Applications</h3>
+                      <div className="rounded-lg bg-gray-50 p-4">
+                        <ul className="space-y-2">
+                          {selectedPinout.data.applications.map((app: string, idx: number) => (
+                            <li key={idx} className="flex items-center gap-2 text-gray-700">
+                              <span className="text-green-700">✓</span>
+                              {app}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+
+                  {/* Notes */}
+                  {selectedPinout.data.notes && (
+                    <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-4">
+                      <div className="flex gap-3">
+                        <span className="text-2xl">⚠️</span>
+                        <p className="text-sm text-yellow-800">{selectedPinout.data.notes}</p>
+                      </div>
+                    </div>
+                  )}
+
+                </div>
               </div>
-            </div>
+            )}
+
           </section>
         </div>
       </main>
@@ -352,11 +382,7 @@ export default function CampanaLMSHome() {
 function SparkIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
-      <path
-        d="M12 2v5M12 17v5M2 12h5M17 12h5M5 5l3.5 3.5M15.5 15.5L19 19M5 19l3.5-3.5M15.5 8.5L19 5"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-      />
+      <path d="M12 2v5M12 17v5M2 12h5M17 12h5M5 5l3.5 3.5M15.5 15.5L19 19M5 19l3.5-3.5M15.5 8.5L19 5" strokeWidth="1.6" strokeLinecap="round" />
     </svg>
   );
 }
@@ -364,12 +390,7 @@ function SparkIcon(props: React.SVGProps<SVGSVGElement>) {
 function ArrowIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
-      <path
-        d="M9 18l6-6-6-6"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <path d="M9 18l6-6-6-6" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -377,11 +398,7 @@ function ArrowIcon(props: React.SVGProps<SVGSVGElement>) {
 function PinIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
-      <path
-        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-      />
+      <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeWidth="1.6" strokeLinecap="round" />
     </svg>
   );
 }
@@ -398,11 +415,7 @@ function ResearchIcon(props: React.SVGProps<SVGSVGElement>) {
 function SpecIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
-      <path
-        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-      />
+      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" strokeWidth="1.6" strokeLinecap="round" />
     </svg>
   );
 }
@@ -410,11 +423,7 @@ function SpecIcon(props: React.SVGProps<SVGSVGElement>) {
 function ZapIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
-      <path
-        d="M13 2L3 14h7l-1 8 11-12h-7l1-8z"
-        strokeWidth="1.6"
-        strokeLinejoin="round"
-      />
+      <path d="M13 2L3 14h7l-1 8 11-12h-7l1-8z" strokeWidth="1.6" strokeLinejoin="round" />
     </svg>
   );
 }
