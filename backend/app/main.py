@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.pinout import router as pinout_router
 
+
 app = FastAPI(title="Campana API")
 
 app.add_middleware(

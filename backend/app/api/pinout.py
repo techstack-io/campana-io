@@ -1,14 +1,16 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
-from app.orchestrator.orchestrator import search_pinouts
 
 router = APIRouter(tags=["pinouts"])
+
+# ---------- Data Models ----------
 
 class Pin(BaseModel):
     num: int
     signal: str
     color: str
+
 
 class Pinout(BaseModel):
     id: str
@@ -17,7 +19,9 @@ class Pinout(BaseModel):
     imageUrl: Optional[str] = None
     data: dict
 
-# seed in-memory (mirrors your frontend)
+
+# ---------- In-Memory Pinouts (temporary seed data) ----------
+
 PINOUTS: List[Pinout] = [
     Pinout(
         id="xlr-3pin",
@@ -34,8 +38,9 @@ PINOUTS: List[Pinout] = [
             ],
             "applications": ["Microphones", "Professional audio equipment", "Speakers"],
             "notes": (
-                "For passive speakers (which require an external amplifier), use a heavy-gauge speaker cable, "
-                "not an XLR microphone cable. XLR is for low-voltage, high-impedance signals; "
+                "For passive speakers (which require an external amplifier), "
+                "use a heavy-gauge speaker cable, not an XLR microphone cable. "
+                "XLR is for low-voltage, high-impedance signals; "
                 "speaker cables carry high-current, low-impedance speaker-level signals."
             ),
         },
@@ -98,22 +103,19 @@ PINOUTS: List[Pinout] = [
     ),
 ]
 
+
+# ---------- Routes ----------
+
 @router.get("/pinouts", response_model=List[Pinout])
 def list_pinouts():
+    """Return all available pinouts."""
     return PINOUTS
+
 
 @router.get("/pinouts/{pinout_id}", response_model=Pinout)
 def get_pinout(pinout_id: str):
+    """Return one pinout by ID."""
     for p in PINOUTS:
         if p.id == pinout_id:
             return p
-    raise HTTPException(status_code=404, detail="pinout not found")
-
-class SearchIn(BaseModel):
-    q: str
-    k: int | None = 8
-
-@router.post("/search")
-def search(in_: SearchIn):
-    hits = search_pinouts(in_.q, PINOUTS, in_.k or 8)
-    return {"query": in_.q, "hits": hits}
+    raise HTTPException(status_code=404, detail="Pinout not found")
