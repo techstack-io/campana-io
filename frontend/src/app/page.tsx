@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import Link from "next/link";
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 
 export default function CampanaLMSHome() {
   const [view, setView] = useState<"welcome" | "list" | "pinout">("welcome");
   const [selectedPinout, setSelectedPinout] = useState<any>(null);
   const [q, setQ] = useState("");
 
-  // All available pinouts
   const pinouts = [
     {
       id: "xlr-3pin",
@@ -20,11 +21,12 @@ export default function CampanaLMSHome() {
         pins: [
           { num: 1, signal: "Signal Ground", color: "Shield" },
           { num: 2, signal: "Hot/Positive (+)", color: "Red/White" },
-          { num: 3, signal: "Cold/Negative (-)", color: "Black/Blue" }
+          { num: 3, signal: "Cold/Negative (-)", color: "Black/Blue" },
         ],
         applications: ["Microphones", "Professional audio equipment", "Speakers"],
-        notes: "For passive speakers (which require an external amplifier), you must use a heavy-gauge speaker cable, not an XLR microphone cable. XLR is designed for low-voltage, high-impedance signals, while speaker cables handle high-current, low-impedance speaker-level signals."
-      }
+        notes:
+          "For passive speakers you must use a heavy-gauge speaker cable, not an XLR microphone cable.",
+      },
     },
     {
       id: "xlr-4pin-sony",
@@ -38,11 +40,11 @@ export default function CampanaLMSHome() {
           { num: 1, signal: "Negative (-)", color: "Black" },
           { num: 2, signal: "No Connection", color: "None" },
           { num: 3, signal: "No Connection", color: "None" },
-          { num: 4, signal: "Positive (+)", color: "Red" }
+          { num: 4, signal: "Positive (+)", color: "Red" },
         ],
         applications: ["Sony cameras", "Broadcast video equipment"],
-        notes: "⚠️ WARNING: Verify pinout before connecting. Equipment damage possible."
-      }
+        notes: "WARNING: Verify pinout before connecting.",
+      },
     },
     {
       id: "xlr-4pin-intercom",
@@ -56,11 +58,11 @@ export default function CampanaLMSHome() {
           { num: 1, signal: "Left (+) Signal", color: "Red" },
           { num: 2, signal: "Left (-) Ground", color: "Green" },
           { num: 3, signal: "Right (+) Signal", color: "Red" },
-          { num: 4, signal: "Right (-) Ground", color: "Green" }
+          { num: 4, signal: "Right (-) Ground", color: "Green" },
         ],
         applications: ["Intercom headsets", "Broadcast equipment"],
-        notes: null
-      }
+        notes: null,
+      },
     },
     {
       id: "xlr-6pin-clearcom",
@@ -76,19 +78,18 @@ export default function CampanaLMSHome() {
           { num: 3, signal: "Cable 1: Ground", color: "Green" },
           { num: 4, signal: "Cable 2: Black (-)", color: "Black" },
           { num: 5, signal: "Cable 2: Red (+)", color: "Red" },
-          { num: 6, signal: "Cable 2: Ground", color: "Green" }
+          { num: 6, signal: "Cable 2: Ground", color: "Green" },
         ],
         applications: ["Professional intercom", "Theater communication", "Broadcast"],
-        notes: null
-      }
-    }
+        notes: null,
+      },
+    },
   ];
 
-  // Client search
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return pinouts;
-    return pinouts.filter(p =>
+    return pinouts.filter((p) =>
       [p.name, p.category, p.data.description].join(" ").toLowerCase().includes(s)
     );
   }, [q, pinouts]);
@@ -101,11 +102,7 @@ export default function CampanaLMSHome() {
     setView("pinout");
   }
   function goBack() {
-    if (view === "pinout") {
-      setView("list");
-    } else {
-      setView("welcome");
-    }
+    setView(view === "pinout" ? "list" : "welcome");
   }
 
   const tools = [
@@ -127,10 +124,29 @@ export default function CampanaLMSHome() {
               <p className="text-xs text-slate-500">Agentic learning for B2B buyers</p>
             </div>
           </div>
+
+          {/* Clerk-auth header controls */}
           <div className="hidden items-center gap-2 md:flex">
             <button className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50">Docs</button>
             <button className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50">Admin</button>
-            <button className="rounded-lg bg-slate-900 px-3 py-2 text-sm text-white hover:bg-slate-800">Sign in</button>
+
+            <SignedOut>
+              <SignInButton mode="modal">
+                <button className="rounded-lg bg-slate-900 px-3 py-2 text-sm text-white hover:bg-slate-800">
+                  Sign in
+                </button>
+              </SignInButton>
+            </SignedOut>
+
+            <SignedIn>
+              <Link
+                href="/product"
+                className="rounded-lg bg-slate-900 px-3 py-2 text-sm text-white hover:bg-slate-800"
+              >
+                Go to App
+              </Link>
+              <UserButton afterSignOutUrl="/" />
+            </SignedIn>
           </div>
         </div>
       </header>
@@ -138,8 +154,7 @@ export default function CampanaLMSHome() {
       {/* Main Content */}
       <main className="mx-auto max-w-7xl px-4 py-6">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-          
-          {/* Quick Tools Sidebar */}
+          {/* Sidebar */}
           <aside className="lg:col-span-3">
             <div className="space-y-4">
               {/* Welcome Card */}
@@ -172,15 +187,15 @@ export default function CampanaLMSHome() {
                     </button>
                   ))}
                 </div>
+              </div>
 
               {/* Recent */}
-              </div>
               <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
                 <h3 className="mb-3 text-sm font-semibold">Recent</h3>
                 <ul className="space-y-2 text-sm">
                   <li
                     className="flex items-center justify-between rounded-lg border border-gray-200 p-2 hover:bg-gray-50 cursor-pointer"
-                    onClick={() => showPinout(pinouts.find(p => p.id === "xlr-3pin"))}
+                    onClick={() => showPinout(pinouts.find((p) => p.id === "xlr-3pin"))}
                   >
                     <span className="truncate text-gray-900">3-pin XLR microphone</span>
                     <span className="text-xs text-gray-500">5 min</span>
@@ -200,8 +215,6 @@ export default function CampanaLMSHome() {
 
           {/* Main Area */}
           <section className="lg:col-span-9">
-            
-            {/* Welcome View */}
             {view === "welcome" && (
               <div className="rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
                 <div className="mx-auto max-w-md">
@@ -222,7 +235,6 @@ export default function CampanaLMSHome() {
               </div>
             )}
 
-            {/* List View */}
             {view === "list" && (
               <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
                 <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between gap-3">
@@ -275,10 +287,8 @@ export default function CampanaLMSHome() {
               </div>
             )}
 
-            {/* Pinout View */}
             {view === "pinout" && selectedPinout && (
               <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-                {/* Header */}
                 <div className="border-b border-gray-200 bg-gray-900 px-6 py-4 text-white">
                   <div className="flex items-center justify-between">
                     <div>
@@ -292,13 +302,12 @@ export default function CampanaLMSHome() {
                 </div>
 
                 <div className="p-6 space-y-6">
-                  {/* Pinout Diagram Image */}
                   {selectedPinout.imageUrl && (
                     <div>
                       <h3 className="mb-3 text-sm font-semibold uppercase text-gray-700">Diagram</h3>
                       <div className="rounded-lg border border-gray-200 overflow-hidden bg-white">
-                        <img 
-                          src={selectedPinout.imageUrl} 
+                        <img
+                          src={selectedPinout.imageUrl}
                           alt={selectedPinout.data.name}
                           className="w-full h-auto"
                         />
@@ -306,7 +315,6 @@ export default function CampanaLMSHome() {
                     </div>
                   )}
 
-                  {/* Pin Table */}
                   <div>
                     <h3 className="mb-3 text-sm font-semibold uppercase text-gray-700">Pinout</h3>
                     <div className="rounded-lg border border-gray-200 overflow-hidden">
@@ -335,7 +343,6 @@ export default function CampanaLMSHome() {
                     </div>
                   </div>
 
-                  {/* Applications */}
                   {selectedPinout.data.applications && (
                     <div>
                       <h3 className="mb-3 text-sm font-semibold uppercase text-gray-700">Common Applications</h3>
@@ -352,7 +359,6 @@ export default function CampanaLMSHome() {
                     </div>
                   )}
 
-                  {/* Notes */}
                   {selectedPinout.data.notes && (
                     <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-4">
                       <div className="flex gap-3">
@@ -361,11 +367,9 @@ export default function CampanaLMSHome() {
                       </div>
                     </div>
                   )}
-
                 </div>
               </div>
             )}
-
           </section>
         </div>
       </main>
@@ -382,7 +386,11 @@ export default function CampanaLMSHome() {
 function SparkIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
-      <path d="M12 2v5M12 17v5M2 12h5M17 12h5M5 5l3.5 3.5M15.5 15.5L19 19M5 19l3.5-3.5M15.5 8.5L19 5" strokeWidth="1.6" strokeLinecap="round" />
+      <path
+        d="M12 2v5M12 17v5M2 12h5M17 12h5M5 5l3.5 3.5M15.5 15.5L19 19M5 19l3.5-3.5M15.5 8.5L19 5"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -398,7 +406,11 @@ function ArrowIcon(props: React.SVGProps<SVGSVGElement>) {
 function PinIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
-      <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeWidth="1.6" strokeLinecap="round" />
+      <path
+        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -415,7 +427,11 @@ function ResearchIcon(props: React.SVGProps<SVGSVGElement>) {
 function SpecIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
-      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" strokeWidth="1.6" strokeLinecap="round" />
+      <path
+        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
