@@ -48,11 +48,12 @@ const SignUpButton: React.FC<React.PropsWithChildren<{ mode?: "modal" | "redirec
 /***************************
  * Helper
  ***************************/
-export function nextIndex(current: number, len: number): number {
+function nextIndex(current: number, len: number): number {
   if (!Number.isInteger(current) || current < 0) return 0;
   if (!Number.isInteger(len) || len <= 0) return 0;
   return (current + 1) % len;
 }
+
 
 /***************************
  * Hero Image Component
