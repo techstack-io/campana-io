@@ -11,6 +11,7 @@
   "dependencies": {
     "@clerk/nextjs": "^6.33.3",
     "@microsoft/fetch-event-source": "^2.0.1",
+    "blueimp-md5": "^2.19.0",
     "lucide-react": "latest",
     "react-markdown": "^10.1.0",
     "remark-breaks": "^4.0.0",

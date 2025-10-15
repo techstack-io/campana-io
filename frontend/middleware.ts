@@ -7,8 +7,11 @@ export default clerkMiddleware((auth, req) => {
 
   const isAuthRoute =
     pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up");
+
   const isPublic =
-    pathname === "/welcome" || pathname === "/favicon.ico";
+    pathname === "/welcome" ||
+    pathname === "/favicon.ico" ||
+    pathname.startsWith("/dashboard"); // <-- allow
 
   if (!userId && !isAuthRoute && !isPublic) {
     const url = req.nextUrl.clone();
