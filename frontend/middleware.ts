@@ -1,27 +1,34 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-export default clerkMiddleware((auth, req) => {
-  const { userId } = auth();
+// Optional: Define which routes require auth
+const isPublicRoute = createRouteMatcher([
+  "/",
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+  "/api/public(.*)"
+]);
+
+export default clerkMiddleware(async (auth, req) => {
+  // Always await the auth() call – it returns a Promise
+  const session = await auth();
+  const { userId } = session;
   const { pathname } = req.nextUrl;
 
-  const isAuthRoute =
-    pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up");
-
-  const isPublic =
-    pathname === "/welcome" ||
-    pathname === "/favicon.ico" ||
-    pathname.startsWith("/dashboard"); // <-- allow
-
-  if (!userId && !isAuthRoute && !isPublic) {
-    const url = req.nextUrl.clone();
-    url.pathname = "/welcome";
-    return NextResponse.redirect(url);
+  // If user not signed in and route not public → redirect to sign-in
+  if (!userId && !isPublicRoute(req)) {
+    return session.redirectToSignIn({ returnBackUrl: req.url });
   }
 
-  return NextResponse.next();
+  // Continue the request
+  return Response.next();
 });
 
+// Clerk requires this export for edge middleware
 export const config = {
-  matcher: ["/((?!_next|.*\\..*).*)", "/(api|trpc)(.*)"],
+  matcher: [
+    /*
+     * Match all routes except static files, _next, and api routes
+     */
+    "/((?!_next|.*\\..*|api/public).*)"
+  ]
 };
