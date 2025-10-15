@@ -207,9 +207,9 @@ export default function CampanaLMSHome() {
                       className="group flex w-full items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 text-left transition-all hover:border-green-600 hover:bg-gray-50 hover:shadow-md"
                       aria-label={t.name}
                     >
-                      <t.icon className="h-5 w-5 text-gray-600 group-hover:text-green-700" aria-hidden="true" />
+                      <t.icon className="h-5 w-5 text-gray-600 group-hover:text-[#09A7E8]" aria-hidden="true" />
                       <span className="flex-1 font-medium text-gray-900">{t.name}</span>
-                      <ArrowIcon className="h-4 w-4 text-gray-400 group-hover:text-green-700" aria-hidden="true" />
+                      <ArrowIcon className="h-4 w-4 text-gray-400 group-hover:text-[#09A7E8]" aria-hidden="true" />
                     </button>
                   ))}
                 </div>
@@ -256,7 +256,7 @@ export default function CampanaLMSHome() {
                   </p>
                   <button
                     onClick={showList}
-                    className="rounded-lg bg-[#0c2d56] px-6 py-3 font-medium text-white hover:bg-green-800"
+                    className="rounded-lg bg-[#0c2d56] px-6 py-3 font-medium text-white hover:bg-[#09A7E8]"
                     aria-label="View all pinouts"
                   >
                     View All Pinouts →
@@ -277,7 +277,7 @@ export default function CampanaLMSHome() {
                       value={q}
                       onChange={(e) => setQ(e.target.value)}
                       placeholder="Search pinouts (e.g., XLR 3-pin, Clear-Com)"
-                      className="w-64 rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-600"
+                      className="w-64 rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#09A7E8]"
                       aria-label="Search pinouts"
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && filtered.length) showPinout(filtered[0]);
@@ -305,7 +305,7 @@ export default function CampanaLMSHome() {
                           <div className="flex-1">
                             <h3 className="font-medium text-gray-900">{pinout.name}</h3>
                             <p className="text-sm text-gray-600">{pinout.data.description}</p>
-                            <span className="mt-2 inline-block rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+                            <span className="mt-2 inline-block rounded-full bg-[#e6f6fc] px-2 py-1 text-xs font-medium text-[#09A7E8]">
                               {pinout.category}
                             </span>
                           </div>
